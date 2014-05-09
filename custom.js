@@ -8,8 +8,8 @@ $jq(document).ready(function(){
 
 	$jq( ".fedcms-html-box" ).change(function() {
 	  //alert( "Handler for .change() called." );
-	  console.log($jq(this).attr("id"));
-	  console.log($jq(this).index('.fedcms-html-box'));
+	  //console.log($jq(this).attr("id"));
+	  //console.log($jq(this).index('.fedcms-html-box'));
 	  $jq("#html-code-"+($jq(this).index('.fedcms-html-box')+1)).toggle();
 	});
 });

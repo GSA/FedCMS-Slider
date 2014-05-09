@@ -90,6 +90,7 @@ function fedcms_slider_defaults() {
     	'titleSize' => 16,
     	'fontSize' => 12,
         //'links' => 'true',
+        'keyboardNav' => 'true',
         'titleColor' => 'FFFFFF',
     	'textColor' => 'FFFFFF',
     	'bgColor' => '222222',
@@ -401,7 +402,6 @@ $option=$_GET['edit'];
 ?>
 <h2><?php _e("FedCMS Slider 1.0.1 Edit Options Page [ ".$option." ]"); ?></h2>
 
-
 <form method="post" action="options.php">
 <?php settings_fields( 'fedcms-settings-group' ); ?>
 <?php
@@ -414,14 +414,17 @@ $options = get_option($option);
         <h3><?php _e("General Setings", 'fedcms_slider'); ?></h3>
             <div id="general" class="inside" style="padding: 10px;">
 
-                <p><?php _e("Slider Max width", 'fedcms_slider'); ?>:<input type="text" name="<?php echo $option; ?>[width]" value="<?php echo $options['width'] ?>" size="3" />&nbsp;&nbsp;<?php _e("Minimum height", 'fedcms_slider'); ?>:<input type="text" name="<?php echo $option; ?>[height]" value="<?php echo $options['height'] ?>" size="3" /></p>
+                <p><?php _e("Slider max width", 'fedcms_slider'); ?>:<input type="text" name="<?php echo $option; ?>[width]" value="<?php echo $options['width'] ?>" size="3" />&nbsp;&nbsp;<?php _e("Minimum height", 'fedcms_slider'); ?>:<input type="text" name="<?php echo $option; ?>[height]" value="<?php echo $options['height'] ?>" size="3" /></p>
                 <p><?php _e("Delay between images", 'fedcms_slider'); ?>:<input type="text" name="<?php echo $option; ?>[delay]" value="<?php echo $options['delay'] ?>" size="3" />&nbsp;in ms</p>
                 <p><?php _e("Opacity of title and navigation", 'fedcms_slider'); ?>:<input type="text" name="<?php echo $option; ?>[opacity]" value="<?php echo $options['opacity'] ?>" size="3" /></p>
                 <p><?php _e("Speed of title appereance", 'fedcms_slider'); ?>:<input type="text" name="<?php echo $option; ?>[titleSpeed]" value="<?php echo $options['titleSpeed'] ?>" size="3" />&nbsp;in ms</p>
 
+                <p><?php _e("Allow keyboard navigation", 'fedcms_slider'); ?>:<select name="<?php echo $option; ?>[keyboard-nav]"><option value="true" <?php selected('true', $options['keyboard-nav']); ?>>Yes</option><option value="false" <?php selected('false', $options['keyboard-nav']); ?>>No</option></select></p>
+
                 <p><?php _e("Show navigation buttons", 'fedcms_slider'); ?>:<select name="<?php echo $option; ?>[show-nav]"><option value="true" <?php selected('true', $options['show-nav']); ?>>Yes</option><option value="false" <?php selected('false', $options['show-nav']); ?>>No</option></select>
                 &nbsp;&nbsp;<a href="#" class="tooltip"><span><img src='<?php echo WP_CONTENT_URL;?>/plugins/fedcms-slider/navigationbuttons.png' /> </span><img src='<?php echo WP_CONTENT_URL;?>/plugins/fedcms-slider/tooltip.png' /> </a>
                 </p>
+
                 <?php /*?><p><?php _e("Navigation Type", 'fedcms_slider'); ?>:<select name="<?php echo $option; ?>[nav-style]"><option value="true" <?php selected('true', $options['nav-style']); ?>>Yes</option><option value="false" <?php selected('false', $options['nav-style']); ?>>No</option></select>
 
                 <p><?php _e("Show images as links ", 'fedcms_slider'); ?>:<select name="<?php echo $option; ?>[links]"><option value="true" <?php selected('true', $options['links']); ?>>Yes</option><option value="false" <?php selected('false', $options['links']); ?>>No</option></select></p>
@@ -487,7 +490,10 @@ $options = get_option($option);
         </div>
     </div>
 
-    <?php $slides = $options['slideNr'] + 1; ?>
+    <?php
+        $slides = $options['slideNr'] + 1;
+        $allowed_tags = wp_kses_allowed_html( 'post' );
+    ?>
     <?php for($x=1; $x<$slides; $x++){ ?>
     <div class="metabox-holder" style="width: 450px;float:right;margin-bottom:-10px;">
         <div class="postbox">
@@ -510,8 +516,8 @@ $options = get_option($option);
                 <?php _e("Slider background image url(optional)", 'fedcms_slider'); ?>:<br />
                 <input type="text" name="<?php echo $option; ?>[imageurl<?php echo $x; ?>]" value="<?php echo $options['imageurl'.$x.''] ?>" size="62" /><br />
                 </p>
-                <p id="html-code-<?php echo $x;?>"<?php echo $options['htmlOnly'.$x] == 'false' ? ' style="display:none;"' : '';?>><?php _e("HTML", 'fedcms_slider'); ?>:<br />
-                 <textarea name="<?php echo $option; ?>[boxHtml<?php echo $x; ?>]" cols=51 rows=3><?php echo $options['boxHtml'.$x.''] ?></textarea>
+                <p id="html-code-<?php echo $x;?>" style="display:<?php echo $options['htmlOnly'.$x] == 'true' ? 'block' : 'none';?>;"><?php _e("HTML", 'fedcms_slider'); ?>:<br />
+                 <textarea name="<?php echo $option; ?>[boxHtml<?php echo $x; ?>]" cols=51 rows=3><?php echo wp_kses($options['boxHtml'.$x.''],$allowed_tags); ?></textarea>
                 </p>
                 <p><input type="submit" class="button" value="<?php _e('Save Settings') ?>" /></p>
 
@@ -555,14 +561,40 @@ if($options['auto-rotate'] == 'true')
     });
     </script><?php
 }
+if($options['keyboard-nav'] == 'true')
+{
+?><script type="text/javascript">
+    jQuery(document).keydown(function(e){
+        if (e.keyCode == 37) { 
+           jQuery("#previous").trigger("click");
+           return false;
+        }
+        if (e.keyCode == 39) { 
+           jQuery("#next").trigger("click");
+           return false;
+        }
+    });
+    </script><?php
+}
 ?><style type="text/css" media="screen">
 #<?php echo $option; ?>container {
     margin: <?php echo $options['holdermar']; ?>;
     float:<?php echo $options['holderfloat']; ?>;
     /*position: relative;*/
     }
+<?php
+if($options['show-nav'] == 'false')
+{
+    ?>
+    #<?php echo $option; ?> #previous, #<?php echo $option; ?> #next {
+        display:none;
+    }
+    <?php
+}
+?>
 #<?php echo $option; ?> { 
-    max-width: 100%; 
+    max-width: 100%;
+    width: <?php echo $options['width']; ?>px; 
     min-height:<?php echo $options['height']; ?>px;
     
     position: relative; 
@@ -818,6 +850,7 @@ function fedcms_slider($option='fedcms_slider_defaults'){
     ?>
     <div id="previous">Previous</div>
     <?php
+    $allowed_tags = wp_kses_allowed_html( 'post' );
     foreach( $randx as $x){ ?>
        
        <?php 
@@ -831,7 +864,7 @@ function fedcms_slider($option='fedcms_slider_defaults'){
             if('true' == $options['htmlOnly'.$x.''])
             {
             ?>
-                <div id="box-inner<?php echo $x;?>"><?php echo $options['boxHtml'.$x.'']; ?></div>
+                <div id="box-inner<?php echo $x;?>"><?php echo wp_kses($options['boxHtml'.$x.''], $allowed_tags); ?></div>
             <?php
             }
             else
